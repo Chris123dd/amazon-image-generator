@@ -315,7 +315,18 @@ async function generateWithDoubao(
 ): Promise<string> {
   console.log('使用豆包生成，提示词:', prompt, '模型:', model);
 
+  if (!apiKey) {
+    console.log('没有配置火山引擎API Key，使用模拟数据');
+    return productImage;
+  }
+
   try {
+    // 修正模型ID格式，火山引擎需要使用推理接入点ID
+    // 豆包文档显示支持的模型ID: doubao-seedream-4-5-251128, doubao-seedream-4-0-250828
+    const modelId = model.startsWith('doubao-') ? model : 'doubao-seedream-4-5-251128';
+    
+    console.log('调用豆包API，模型:', modelId);
+
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
       method: 'POST',
       headers: {
@@ -323,21 +334,30 @@ async function generateWithDoubao(
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: model,
-        prompt: prompt,
-        size: '2K',
+        model: modelId,
+        prompt: prompt || '专业产品摄影，电商展示图',
+        size: '2048x2048',
         response_format: 'b64_json',
-        watermark: false
+        watermark: false,
+        n: 1
       })
     });
 
+    const responseText = await response.text();
+    console.log('豆包API响应:', response.status, responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('豆包API错误:', response.status, errorText);
-      throw new Error(`豆包API错误: ${response.status}`);
+      console.error('豆包API错误:', response.status);
+      throw new Error(`豆包API请求失败: ${response.status}`);
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('豆包API JSON解析失败:', responseText);
+      throw new Error('豆包API返回格式错误');
+    }
     
     if (data.data && data.data[0] && data.data[0].b64_json) {
       return 'data:image/png;base64,' + data.data[0].b64_json;
