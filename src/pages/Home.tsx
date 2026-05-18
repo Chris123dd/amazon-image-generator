@@ -314,9 +314,17 @@ export default function Home() {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-            图片配置 (7 张)
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+              图片配置 (7 张)
+            </h2>
+            <TemplateSelector
+              templates={templates}
+              onSave={saveTemplate}
+              onLoad={loadTemplate}
+              onDelete={deleteTemplate}
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {config.images.map((imgConfig, idx) => (
               <ConfigCard
