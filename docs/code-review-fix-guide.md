@@ -136,29 +136,81 @@ export interface Template {
 
 **影响**: 用户选择 SD 引擎时，无论传什么图都无效
 
-**修复方案（二选一）**:
+**修复方案**: 方案 A - 使用支持图生图的 SDXL img2img 模型
 
-**方案 A：使用支持图生图的模型**
+**修复步骤**:
+
+1. 在 `api/routes/generate.ts` 中找到 `generateWithStableDiffusion` 函数
+
+2. 替换整个函数实现：
 
 ```typescript
-// 更换为支持 img2img 的模型
-const output = await replicate.run(
-  "stability-ai/sdxl:...",  // 换成 img2img 模型
-  {
-    input: {
-      prompt: fullPrompt,
-      image: productImage,  // 添加产品图
-      strength: 0.75,       // 图像保留程度
-    },
+async function generateWithStableDiffusion(
+  productImage: string,
+  referenceImages: string[],
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log('使用 Stable Diffusion 生成，提示词:', prompt);
+
+  try {
+    const replicate = new Replicate({ auth: apiKey });
+
+    // 将 base64 产品图转为 URL（Replicate img2img 模型需要 URL）
+    const productBuffer = Buffer.from(productImage.split(',')[1], 'base64');
+    const resizedProduct = await sharp(productBuffer)
+      .resize(1024, 1024, { fit: 'contain', background: { r: 255, g: 255, b: 255 } })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    // 上传到临时存储获取 URL（这里用 data URI 方式处理）
+    const productImageUrl = `data:image/jpeg;base64,${resizedProduct.toString('base64')}`;
+
+    // 构建增强提示词
+    const fullPrompt = referenceImages.length > 0
+      ? `${prompt}, product photography, professional, high quality, detailed`
+      : `${prompt}, product photography, professional, clean white background, high quality, detailed`;
+
+    // 调用 SDXL img2img 模型（支持图生图）
+    // 模型: stability-ai/sdxl:image-to-image
+    const output = await replicate.run(
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+      {
+        input: {
+          prompt: fullPrompt,
+          negative_prompt: "blurry, low quality, distorted, bad anatomy, text, watermark, deformed",
+          image: productImageUrl,
+          strength: 0.6,          // 0-1，越低越保留原图
+          guidance_scale: 7.5,
+          num_inference_steps: 30,
+        },
+      }
+    );
+
+    if (Array.isArray(output) && output.length > 0) {
+      const imageUrl = output[0];
+      const imageResponse = await fetch(imageUrl);
+      const imageBuffer = await imageResponse.arrayBuffer();
+      return 'data:image/jpeg;base64,' + Buffer.from(imageBuffer).toString('base64');
+    }
+
+    throw new Error('Stable Diffusion 没有返回图片');
+  } catch (error) {
+    console.error('Stable Diffusion 错误:', error);
+    throw error;  // 改为抛出错误，让上层处理
   }
-);
+}
 ```
 
-**方案 B：删除无用代码**
+3. 如果需要支持参考图（在 ControlNet 或 IP-Adapter 场景下），需要在调用前将参考图也处理成 URL 格式
 
-如果当前业务不需要图生图，直接删除图片处理代码，避免误导。
+**关键参数说明**:
+- `image`: 输入的产品图（支持 data URI）
+- `strength`: 0.0-1.0，值越小越保留原图特征，建议 0.5-0.7
+- `guidance_scale`: 提示词引导强度，7-8 是常用值
+- `num_inference_steps`: 推理步数，25-50 效果较好
 
-**验收标准**: 选择 SD 引擎时，产品图和参考图能够影响生成结果
+**验收标准**: 选择 SD 引擎，上传产品图后，生成结果应包含原产品的主要视觉特征
 
 ---
 
