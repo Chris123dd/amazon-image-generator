@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>亚马逊主图生成工具 - 设计头脑风暴</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF9900 0%, #FF6B00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 153, 0, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(255, 153, 0, 0.15);
+        }
+        
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            color: #FF9900;
+            margin-bottom: 15px;
+        }
+        
+        .card ul {
+            list-style: none;
+        }
+        
+        .card li {
+            padding: 8px 0;
+            color: #cbd5e1;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .card li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF9900, #FF6B00);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 5px 5px 5px 0;
+        }
+        
+        .workflow {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 50px;
+        }
+        
+        .workflow h2 {
+            font-family: 'Poppins', sans-serif;
+            color: #FF9900;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .step {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FF9900, #FF6B00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 15px;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .arrow {
+            font-size: 2rem;
+            color: #FF9900;
+        }
+        
+        .options-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+        
+        .option-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(255, 153, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .option-card:hover {
+            border-color: #FF9900;
+            transform: scale(1.02);
+        }
+        
+        .option-card h3 {
+            color: #FF9900;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .option-card p {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .options-section {
+                grid-template-columns: 1fr;
+            }
+            .workflow-steps {
+                flex-direction: column;
+            }
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛍️ 亚马逊主图生成工具</h1>
+            <p class="subtitle">让我们一起设计这个强大的工具！</p>
+        </header>
+        
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon">🎨</div>
+                <h2>核心功能</h2>
+                <ul>
+                    <li>📷 白底产品图上传</li>
+                    <li>🖼️ 7张图批量配置</li>
+                    <li>🤖 多AI引擎选择</li>
+                    <li>📋 模板保存/加载</li>
+                    <li>⏳ 队列式逐张生成</li>
+                    <li>📦 一键打包导出</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">✨</div>
+                <h2>特色亮点</h2>
+                <div>
+                    <span class="feature-tag">AI驱动</span>
+                    <span class="feature-tag">风格一致</span>
+                    <span class="feature-tag">模板复用</span>
+                    <span class="feature-tag">批量生成</span>
+                    <span class="feature-tag">亚马逊专用</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">🤖</div>
+                <h2>AI引擎</h2>
+                <ul>
+                    <li>Stable Diffusion (推荐)</li>
+                    <li>Midjourney</li>
+                    <li>DALL-E 3</li>
+                    <li>可扩展更多...</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="workflow">
+            <h2>📋 工作流程</h2>
+            <div class="workflow-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">上传白底产品图</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">加载/配置模板</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">选择AI引擎</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-title">批量生成</div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-title">导出全套图</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-bottom: 30px;">
+            <div class="card-icon">📐</div>
+            <h2>V1.0 最终设计方案</h2>
+            <ul style="margin-top: 20px;">
+                <li><strong>✅ 产品白底图上传</strong> - 单张主产品图</li>
+                <li><strong>✅ AI引擎选择</strong> - 统一选择一个AI，保证风格一致</li>
+                <li><strong>✅ 7张图片配置</strong> - 每张图独立设置参考图+提示词</li>
+                <li><strong>✅ 模板系统</strong> - 保存配置，下次一键加载</li>
+                <li><strong>✅ 队列生成</strong> - 逐张生成，实时进度显示</li>
+                <li><strong>✅ 打包导出</strong> - 一键下载全套亚马逊图片</li>
+            </ul>
+        </div>
+        
+        <h2 style="font-family: 'Poppins', sans-serif; color: #FF9900; margin-bottom: 30px; text-align: center;">🚀 准备就绪！</h2>
+        <p style="text-align: center; color: #94a3b8; font-size: 1.2rem;">设计方案已确定，让我们开始写文档并实现吧！</p>
+    </div>
+</body>
+</html>
