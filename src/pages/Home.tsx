@@ -59,6 +59,7 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     loadTemplates();
@@ -77,6 +78,7 @@ export default function Home() {
       return;
     }
 
+    pausedRef.current = false;
     setGenerationState('generating');
     setCurrentGeneratingIndex(0);
     setProgress(0);
@@ -84,8 +86,7 @@ export default function Home() {
 
     try {
       for (let i = 0; i < config.images.length; i++) {
-        const currentState = useEditorStore.getState().generationState;
-        if (currentState === 'paused') {
+        if (pausedRef.current) {
           break;
         }
 
@@ -168,6 +169,7 @@ export default function Home() {
   };
 
   const handlePause = () => {
+    pausedRef.current = true;
     setGenerationState('paused');
     abortControllerRef.current?.abort();
   };

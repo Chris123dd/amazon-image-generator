@@ -67,6 +67,7 @@ export default function Templates() {
       id: Date.now().toString(),
       name: newTemplateName.trim(),
       createdAt: Date.now(),
+      aiEngine: 'mock',
       imageConfigs: Array(7).fill(null).map(() => ({ 
         referenceImages: [],
         prompt: '' 

@@ -30,7 +30,7 @@ const ENGINE_API_KEY_MAP: Record<AIEngine, keyof AISelectorProps['apiKeys'] | nu
 const AI_OPTIONS: {
   id: AIEngine;
   name: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: React.ComponentType<{ className?: string; size?: number | string }>;
   description: string;
   category: 'domestic' | 'foreign';
 }[] = [
