@@ -9,6 +9,77 @@ import sharp from 'sharp';
 
 const router = express.Router();
 
+router.post('/test-doubao', async (req: Request, res: Response) => {
+  try {
+    const { apiKey, model } = req.body;
+    
+    console.log('测试豆包API连接...');
+    console.log('API Key:', apiKey ? '已提供' : '未提供');
+    console.log('模型:', model || 'doubao-seedream-4-5-251128');
+
+    if (!apiKey) {
+      return res.json({
+        success: false,
+        message: '请提供API Key'
+      });
+    }
+
+    const testPrompt = '一只可爱的小猫，白色背景，高清';
+    
+    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model || 'doubao-seedream-4-5-251128',
+        prompt: testPrompt,
+        size: '512x512',
+        response_format: 'url',
+        watermark: false,
+        n: 1
+      })
+    });
+
+    const responseText = await response.text();
+    console.log('豆包API测试响应:', response.status, responseText);
+
+    if (!response.ok) {
+      return res.json({
+        success: false,
+        status: response.status,
+        message: responseText
+      });
+    }
+
+    try {
+      const data = JSON.parse(responseText);
+      if (data.data && data.data[0]) {
+        return res.json({
+          success: true,
+          data: data.data[0]
+        });
+      }
+      return res.json({
+        success: false,
+        message: 'API返回格式异常'
+      });
+    } catch (e) {
+      return res.json({
+        success: false,
+        message: 'JSON解析失败: ' + responseText
+      });
+    }
+  } catch (error) {
+    console.error('测试豆包API失败:', error);
+    return res.json({
+      success: false,
+      message: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
 router.post('/', async (req: Request, res: Response) => {
   try {
     const {
@@ -321,11 +392,20 @@ async function generateWithDoubao(
   }
 
   try {
-    // 修正模型ID格式，火山引擎需要使用推理接入点ID
-    // 豆包文档显示支持的模型ID: doubao-seedream-4-5-251128, doubao-seedream-4-0-250828
     const modelId = model.startsWith('doubao-') ? model : 'doubao-seedream-4-5-251128';
     
     console.log('调用豆包API，模型:', modelId);
+
+    const requestBody = {
+      model: modelId,
+      prompt: prompt || '专业产品摄影，电商展示图，白色背景',
+      size: '2048x2048',
+      response_format: 'b64_json',
+      watermark: false,
+      n: 1
+    };
+
+    console.log('豆包API请求体:', JSON.stringify(requestBody));
 
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
       method: 'POST',
@@ -333,22 +413,27 @@ async function generateWithDoubao(
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: modelId,
-        prompt: prompt || '专业产品摄影，电商展示图',
-        size: '2048x2048',
-        response_format: 'b64_json',
-        watermark: false,
-        n: 1
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const responseText = await response.text();
-    console.log('豆包API响应:', response.status, responseText);
+    console.log('豆包API响应状态:', response.status);
+    console.log('豆包API响应内容:', responseText);
 
     if (!response.ok) {
-      console.error('豆包API错误:', response.status);
-      throw new Error(`豆包API请求失败: ${response.status}`);
+      console.error('豆包API错误:', response.status, responseText);
+      
+      if (response.status === 400) {
+        throw new Error('请求参数错误，请检查API配置');
+      } else if (response.status === 401) {
+        throw new Error('API Key无效或未授权');
+      } else if (response.status === 403) {
+        throw new Error('权限不足，可能需要开通服务');
+      } else if (response.status === 429) {
+        throw new Error('请求过于频繁，请稍后重试');
+      } else {
+        throw new Error(`豆包API请求失败: ${response.status}`);
+      }
     }
 
     let data;
@@ -360,10 +445,12 @@ async function generateWithDoubao(
     }
     
     if (data.data && data.data[0] && data.data[0].b64_json) {
+      console.log('豆包API成功返回图片');
       return 'data:image/png;base64,' + data.data[0].b64_json;
     }
 
     if (data.data && data.data[0] && data.data[0].url) {
+      console.log('豆包API返回图片URL');
       const imageResponse = await fetch(data.data[0].url);
       const imageBuffer = await imageResponse.arrayBuffer();
       return 'data:image/png;base64,' + Buffer.from(imageBuffer).toString('base64');
