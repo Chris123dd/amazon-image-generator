@@ -8,6 +8,11 @@ const AI_ENGINE_LABELS: Record<AIEngine, string> = {
   'dalle': 'DALL-E 3',
   'gemini': 'Google Gemini',
   'mock': '模拟生成',
+  'jimeng': '即梦',
+  'doubao': '豆包',
+  'tongyi': '通义万相',
+  'wenxin': '文心一格',
+  'hunyuan': '混元',
 };
 
 export default function History() {

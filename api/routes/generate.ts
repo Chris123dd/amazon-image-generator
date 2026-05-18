@@ -55,6 +55,62 @@ router.post('/', async (req: Request, res: Response) => {
           apiKeys.googleApiKey
         );
         break;
+      case 'jimeng':
+        if (!apiKeys.volcanoApiKey) {
+          throw new Error('需要火山引擎 API Key');
+        }
+        resultImage = await generateWithJimeng(
+          productImage,
+          referenceImages,
+          prompt,
+          apiKeys.volcanoApiKey
+        );
+        break;
+      case 'doubao':
+        if (!apiKeys.volcanoApiKey) {
+          throw new Error('需要火山引擎 API Key');
+        }
+        resultImage = await generateWithDoubao(
+          productImage,
+          referenceImages,
+          prompt,
+          apiKeys.volcanoApiKey,
+          apiKeys.doubaoModel || 'doubao-seedream-4-5-251128'
+        );
+        break;
+      case 'tongyi':
+        if (!apiKeys.aliApiKey) {
+          throw new Error('需要阿里云 API Key');
+        }
+        resultImage = await generateWithTongyi(
+          productImage,
+          referenceImages,
+          prompt,
+          apiKeys.aliApiKey
+        );
+        break;
+      case 'wenxin':
+        if (!apiKeys.baiduApiKey) {
+          throw new Error('需要百度 API Key');
+        }
+        resultImage = await generateWithWenxin(
+          productImage,
+          referenceImages,
+          prompt,
+          apiKeys.baiduApiKey
+        );
+        break;
+      case 'hunyuan':
+        if (!apiKeys.tencentApiKey) {
+          throw new Error('需要腾讯云 API Key');
+        }
+        resultImage = await generateWithHunyuan(
+          productImage,
+          referenceImages,
+          prompt,
+          apiKeys.tencentApiKey
+        );
+        break;
       default:
         throw new Error('不支持的 AI 引擎');
     }
@@ -237,6 +293,101 @@ async function generateWithGemini(
     console.log('使用模拟数据作为备用方案');
     return productImage;
   }
+}
+
+async function generateWithJimeng(
+  productImage: string,
+  referenceImages: string[],
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log('使用即梦生成，提示词:', prompt);
+  console.log('即梦API功能即将上线，目前使用模拟数据');
+  return productImage;
+}
+
+async function generateWithDoubao(
+  productImage: string,
+  referenceImages: string[],
+  prompt: string,
+  apiKey: string,
+  model: string = 'doubao-seedream-4-5-251128'
+): Promise<string> {
+  console.log('使用豆包生成，提示词:', prompt, '模型:', model);
+
+  try {
+    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        prompt: prompt,
+        size: '2K',
+        response_format: 'b64_json',
+        watermark: false
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('豆包API错误:', response.status, errorText);
+      throw new Error(`豆包API错误: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.data && data.data[0] && data.data[0].b64_json) {
+      return 'data:image/png;base64,' + data.data[0].b64_json;
+    }
+
+    if (data.data && data.data[0] && data.data[0].url) {
+      const imageResponse = await fetch(data.data[0].url);
+      const imageBuffer = await imageResponse.arrayBuffer();
+      return 'data:image/png;base64,' + Buffer.from(imageBuffer).toString('base64');
+    }
+
+    throw new Error('豆包没有返回图片');
+  } catch (error) {
+    console.error('豆包错误:', error);
+    console.log('使用模拟数据作为备用方案');
+    return productImage;
+  }
+}
+
+async function generateWithTongyi(
+  productImage: string,
+  referenceImages: string[],
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log('使用通义万相生成，提示词:', prompt);
+  console.log('通义万相API功能即将上线，目前使用模拟数据');
+  return productImage;
+}
+
+async function generateWithWenxin(
+  productImage: string,
+  referenceImages: string[],
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log('使用文心一格生成，提示词:', prompt);
+  console.log('文心一格API功能即将上线，目前使用模拟数据');
+  return productImage;
+}
+
+async function generateWithHunyuan(
+  productImage: string,
+  referenceImages: string[],
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  console.log('使用混元生成，提示词:', prompt);
+  console.log('混元API功能即将上线，目前使用模拟数据');
+  return productImage;
 }
 
 export default router;

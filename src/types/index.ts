@@ -1,4 +1,13 @@
-export type AIEngine = 'stable-diffusion' | 'dalle' | 'gemini' | 'mock';
+export type AIEngine = 
+  | 'stable-diffusion' 
+  | 'dalle' 
+  | 'gemini' 
+  | 'mock'
+  | 'jimeng'       // 即梦
+  | 'doubao'       // 豆包
+  | 'tongyi'       // 通义万相
+  | 'wenxin'       // 文心一格
+  | 'hunyuan';     // 混元
 
 export type ImageStatus = 'pending' | 'generating' | 'done' | 'error';
 
@@ -53,9 +62,16 @@ export interface TaskStatus {
 }
 
 export interface ApiKeysConfig {
+  // 国外 API
   replicateApiKey?: string;
   openaiApiKey?: string;
   googleApiKey?: string;
+  // 国内 API
+  volcanoApiKey?: string;       // 火山引擎（即梦/豆包）
+  doubaoModel?: string;          // 豆包模型版本
+  aliApiKey?: string;            // 阿里云（通义万相）
+  baiduApiKey?: string;          // 百度（文心一格）
+  tencentApiKey?: string;        // 腾讯云（混元）
 }
 
 export interface GeneratedImage {
