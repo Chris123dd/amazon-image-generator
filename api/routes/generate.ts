@@ -205,7 +205,7 @@ async function generateWithStableDiffusion(
   prompt: string,
   apiKey: string
 ): Promise<string> {
-  console.log('使用 Stable Diffusion 生成，提示词:', prompt);
+  console.log('使用 Stable Diffusion img2img 生成，提示词:', prompt);
 
   try {
     const replicate = new Replicate({ auth: apiKey });
@@ -216,29 +216,22 @@ async function generateWithStableDiffusion(
       .jpeg({ quality: 90 })
       .toBuffer();
 
-    let refImageBase64: string | null = null;
-    if (referenceImages.length > 0 && referenceImages[0]) {
-      const refBuffer = Buffer.from(referenceImages[0].split(',')[1], 'base64');
-      const resizedRef = await sharp(refBuffer)
-        .resize(1024, 1024, { fit: 'contain', background: { r: 255, g: 255, b: 255 } })
-        .jpeg({ quality: 90 })
-        .toBuffer();
-      refImageBase64 = 'data:image/jpeg;base64,' + resizedRef.toString('base64');
-    }
+    const productImageUrl = `data:image/jpeg;base64,${resizedProduct.toString('base64')}`;
 
-    const fullPrompt = refImageBase64 
-      ? `${prompt}, product photography, professional, clean background, high quality, detailed`
+    const fullPrompt = referenceImages.length > 0
+      ? `${prompt}, product photography, professional, high quality, detailed`
       : `${prompt}, product photography, professional, clean white background, high quality, detailed`;
 
     const output = await replicate.run(
-      "bytedance/sdxl-lightning-4step:727533c94b73ac4a0fbe844dd2571d8c7b45a89a51bd71ecb9d216731f8dd112",
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
       {
         input: {
           prompt: fullPrompt,
-          negative_prompt: "blurry, low quality, distorted, bad anatomy, text, watermark",
-          width: 1024,
-          height: 1024,
-          scheduler: "K_EULER",
+          negative_prompt: "blurry, low quality, distorted, bad anatomy, text, watermark, deformed",
+          image: productImageUrl,
+          strength: 0.6,
+          guidance_scale: 7.5,
+          num_inference_steps: 30,
         },
       }
     );
@@ -253,8 +246,7 @@ async function generateWithStableDiffusion(
     throw new Error('Stable Diffusion 没有返回图片');
   } catch (error) {
     console.error('Stable Diffusion 错误:', error);
-    console.log('使用模拟数据作为备用方案');
-    return productImage;
+    throw error;
   }
 }
 

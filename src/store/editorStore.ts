@@ -134,6 +134,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       id: Date.now().toString(),
       name,
       createdAt: Date.now(),
+      aiEngine: config.aiEngine,
       imageConfigs: config.images.map((img) => ({
         referenceImages: img.referenceImages,
         prompt: img.prompt,
@@ -151,6 +152,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set((state) => ({
         config: {
           ...state.config,
+          aiEngine: template.aiEngine || 'mock',
           images: state.config.images.map((img, idx) => ({
             ...img,
             referenceImages: template.imageConfigs[idx]?.referenceImages || [],

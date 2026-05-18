@@ -29,6 +29,7 @@ export interface Template {
   id: string;
   name: string;
   createdAt: number;
+  aiEngine: AIEngine;
   imageConfigs: Array<{
     referenceImages: string[];
     prompt: string;

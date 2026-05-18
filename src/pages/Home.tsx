@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEditorStore } from '../store/editorStore';
 import { ImageUploader } from '../components/ImageUploader';
 import { ConfigCard } from '../components/ConfigCard';
-import { AISelector } from '../components/AISelector';
+import { AISelector, AVAILABLE_ENGINES } from '../components/AISelector';
 import { TemplateSelector } from '../components/TemplateSelector';
 import {
   Play,
@@ -58,6 +58,11 @@ export default function Home() {
       return;
     }
 
+    if (!AVAILABLE_ENGINES.includes(config.aiEngine)) {
+      alert('该 AI 引擎暂不可用，请选择其他引擎');
+      return;
+    }
+
     setGenerationState('generating');
     setCurrentGeneratingIndex(0);
     setProgress(0);
@@ -65,15 +70,15 @@ export default function Home() {
 
     try {
       for (let i = 0; i < config.images.length; i++) {
-        if (generationState === 'paused') {
+        const currentState = useEditorStore.getState().generationState;
+        if (currentState === 'paused') {
           break;
         }
 
-        const imgConfig = config.images[i];
         setImageStatus(i + 1, 'generating');
         setCurrentGeneratingIndex(i);
 
-        await generateImage(i);
+        await generateImage(i, abortControllerRef.current);
         setProgress(((i + 1) / config.images.length) * 100);
       }
 
@@ -85,7 +90,7 @@ export default function Home() {
     }
   };
 
-  const generateImage = async (index: number) => {
+  const generateImage = async (index: number, abortController?: AbortController) => {
     const imgConfig = config.images[index];
     
     if (config.aiEngine === 'mock') {
@@ -131,6 +136,7 @@ export default function Home() {
           prompt: imgConfig.prompt,
           apiKeys,
         }),
+        signal: abortController?.signal,
       });
 
       const result = await response.json();

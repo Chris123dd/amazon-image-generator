@@ -1,15 +1,17 @@
 import { AIEngine } from '../types';
-import { Brain, Sparkles, Zap, Gem, Play, Cloud, CloudLightning, CloudRain, CloudFog, Flower2 } from 'lucide-react';
+import { Brain, Zap, Gem, Play, Cloud, CloudLightning, CloudRain, CloudFog, Flower2 } from 'lucide-react';
 
 interface AISelectorProps {
   value: AIEngine;
   onChange: (engine: AIEngine) => void;
 }
 
+const AVAILABLE_ENGINES: AIEngine[] = ['mock', 'stable-diffusion', 'dalle', 'gemini', 'doubao'];
+
 const AI_OPTIONS: {
   id: AIEngine;
   name: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   description: string;
   category: 'domestic' | 'foreign';
 }[] = [
@@ -82,20 +84,24 @@ export function AISelector({ value, onChange }: AISelectorProps) {
   const foreignOptions = AI_OPTIONS.filter(opt => opt.category === 'foreign');
   const domesticOptions = AI_OPTIONS.filter(opt => opt.category === 'domestic');
 
+  const isEngineAvailable = (id: AIEngine) => AVAILABLE_ENGINES.includes(id);
+
   const renderOptions = (options: typeof AI_OPTIONS) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {options.map((option) => {
         const Icon = option.icon;
         const isSelected = value === option.id;
+        const isAvailable = isEngineAvailable(option.id);
         return (
           <button
             key={option.id}
-            onClick={() => onChange(option.id)}
+            onClick={() => isAvailable && onChange(option.id)}
+            disabled={!isAvailable}
             className={`p-4 rounded-xl border-2 text-left transition-all ${
               isSelected
                 ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/30'
                 : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'
-            }`}
+            } ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="flex items-center gap-3 mb-2">
               <Icon
@@ -104,6 +110,7 @@ export function AISelector({ value, onChange }: AISelectorProps) {
               />
               <span className="font-semibold text-gray-800 dark:text-white">
                 {option.name}
+                {!isAvailable && <span className="text-xs text-gray-400 ml-1">(暂不可用)</span>}
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -133,3 +140,5 @@ export function AISelector({ value, onChange }: AISelectorProps) {
     </div>
   );
 }
+
+export { AVAILABLE_ENGINES };
