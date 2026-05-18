@@ -3,7 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useEditorStore } from '../store/editorStore';
 import { ImageUploader } from '../components/ImageUploader';
 import { ConfigCard } from '../components/ConfigCard';
-import { AISelector, AVAILABLE_ENGINES } from '../components/AISelector';
+import { AISelector } from '../components/AISelector';
+import { AIEngine } from '../types';
+
+const ENGINE_API_KEY_MAP: Record<AIEngine, string | null> = {
+  'mock': null,
+  'stable-diffusion': 'replicateApiKey',
+  'dalle': 'openaiApiKey',
+  'gemini': 'googleApiKey',
+  'doubao': 'volcanoApiKey',
+  'jimeng': 'volcanoApiKey',
+  'tongyi': 'aliApiKey',
+  'wenxin': 'baiduApiKey',
+  'hunyuan': 'tencentApiKey',
+};
 import { TemplateSelector } from '../components/TemplateSelector';
 import {
   Play,
@@ -58,8 +71,9 @@ export default function Home() {
       return;
     }
 
-    if (!AVAILABLE_ENGINES.includes(config.aiEngine)) {
-      alert('该 AI 引擎暂不可用，请选择其他引擎');
+    const requiredKey = ENGINE_API_KEY_MAP[config.aiEngine];
+    if (requiredKey && !apiKeys[requiredKey as keyof typeof apiKeys]) {
+      alert(`该 AI 引擎需要配置 ${requiredKey.replace('ApiKey', '')} API Key`);
       return;
     }
 
@@ -250,6 +264,7 @@ export default function Home() {
               <AISelector
                 value={config.aiEngine}
                 onChange={setAIEngine}
+                apiKeys={apiKeys}
               />
             </div>
           </div>

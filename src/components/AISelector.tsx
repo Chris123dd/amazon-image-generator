@@ -4,9 +4,28 @@ import { Brain, Zap, Gem, Play, Cloud, CloudLightning, CloudRain, CloudFog, Flow
 interface AISelectorProps {
   value: AIEngine;
   onChange: (engine: AIEngine) => void;
+  apiKeys: {
+    replicateApiKey?: string;
+    openaiApiKey?: string;
+    googleApiKey?: string;
+    volcanoApiKey?: string;
+    aliApiKey?: string;
+    baiduApiKey?: string;
+    tencentApiKey?: string;
+  };
 }
 
-const AVAILABLE_ENGINES: AIEngine[] = ['mock', 'stable-diffusion', 'dalle', 'gemini', 'doubao'];
+const ENGINE_API_KEY_MAP: Record<AIEngine, keyof AISelectorProps['apiKeys'] | null> = {
+  'mock': null,
+  'stable-diffusion': 'replicateApiKey',
+  'dalle': 'openaiApiKey',
+  'gemini': 'googleApiKey',
+  'doubao': 'volcanoApiKey',
+  'jimeng': 'volcanoApiKey',
+  'tongyi': 'aliApiKey',
+  'wenxin': 'baiduApiKey',
+  'hunyuan': 'tencentApiKey',
+};
 
 const AI_OPTIONS: {
   id: AIEngine;
@@ -80,28 +99,37 @@ const AI_OPTIONS: {
   },
 ];
 
-export function AISelector({ value, onChange }: AISelectorProps) {
+export function AISelector({ value, onChange, apiKeys }: AISelectorProps) {
   const foreignOptions = AI_OPTIONS.filter(opt => opt.category === 'foreign');
   const domesticOptions = AI_OPTIONS.filter(opt => opt.category === 'domestic');
 
-  const isEngineAvailable = (id: AIEngine) => AVAILABLE_ENGINES.includes(id);
+  const isEngineAvailable = (engine: AIEngine): { available: boolean; reason?: string } => {
+    const requiredKey = ENGINE_API_KEY_MAP[engine];
+    if (requiredKey === null) {
+      return { available: true };
+    }
+    if (!apiKeys[requiredKey]) {
+      return { available: false, reason: `需要配置 ${requiredKey.replace('ApiKey', '')} API Key` };
+    }
+    return { available: true };
+  };
 
   const renderOptions = (options: typeof AI_OPTIONS) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {options.map((option) => {
         const Icon = option.icon;
         const isSelected = value === option.id;
-        const isAvailable = isEngineAvailable(option.id);
+        const { available, reason } = isEngineAvailable(option.id);
         return (
           <button
             key={option.id}
-            onClick={() => isAvailable && onChange(option.id)}
-            disabled={!isAvailable}
+            onClick={() => available && onChange(option.id)}
+            disabled={!available}
             className={`p-4 rounded-xl border-2 text-left transition-all ${
               isSelected
                 ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/30'
                 : 'border-gray-200 dark:border-gray-700 hover:border-orange-300'
-            } ${!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${!available ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="flex items-center gap-3 mb-2">
               <Icon
@@ -110,11 +138,11 @@ export function AISelector({ value, onChange }: AISelectorProps) {
               />
               <span className="font-semibold text-gray-800 dark:text-white">
                 {option.name}
-                {!isAvailable && <span className="text-xs text-gray-400 ml-1">(暂不可用)</span>}
+                {!available && <span className="text-xs text-red-500 ml-1">(需配置)</span>}
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {option.description}
+              {available ? option.description : reason}
             </p>
           </button>
         );
@@ -140,5 +168,3 @@ export function AISelector({ value, onChange }: AISelectorProps) {
     </div>
   );
 }
-
-export { AVAILABLE_ENGINES };
