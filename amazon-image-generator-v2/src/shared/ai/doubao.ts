@@ -22,20 +22,27 @@ export class DoubaoEngine implements IAIEngine {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
       
+      const body: Record<string, unknown> = {
+        model: this.modelId,
+        prompt: request.prompt,
+        size: '2048x2048',
+        response_format: 'b64_json',
+        watermark: false,
+        n: 1,
+      };
+      
+      if (request.productImage) {
+        body.image_url = request.productImage;
+        body.mode = 'image-mix';
+      }
+      
       const response = await fetch(DOUBAO_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`,
         },
-        body: JSON.stringify({
-          model: this.modelId,
-          prompt: request.prompt,
-          size: '2048x2048',
-          response_format: 'b64_json',
-          watermark: false,
-          n: 1,
-        }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
       
