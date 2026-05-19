@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { RefreshCw, Download, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { RefreshCw, Download, Image as ImageIcon, AlertCircle, Upload, X } from 'lucide-react';
 import { useGenerator } from '../context/GeneratorContext';
 import { ImageConfig as ImageConfigType } from '../types';
 import { AI_ENGINES, AIEngine } from '@/shared/ai/types';
@@ -27,6 +27,27 @@ export function ImageConfigCard({ config, index }: Props) {
   const handleDownload = useCallback(() => {
     downloadImage(config.id);
   }, [config.id, downloadImage]);
+  
+  const handleReferenceUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        updateImageConfig(config.id, {
+          referenceImages: [...config.referenceImages, dataUrl]
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  }, [config.id, config.referenceImages, updateImageConfig]);
+  
+  const handleRemoveReference = useCallback((refIndex: number) => {
+    const newReferences = config.referenceImages.filter((_, i) => i !== refIndex);
+    updateImageConfig(config.id, { referenceImages: newReferences });
+  }, [config.id, config.referenceImages, updateImageConfig]);
   
   const statusColors = {
     pending: 'bg-gray-100 text-gray-600',
@@ -76,8 +97,46 @@ export function ImageConfigCard({ config, index }: Props) {
           onChange={handlePromptChange}
           placeholder="描述这张图要呈现的效果..."
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
-          rows={3}
+          rows={2}
         />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          参考图 {config.referenceImages.length > 0 && `(${config.referenceImages.length}张)`}
+        </label>
+        
+        {config.referenceImages.length > 0 && (
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {config.referenceImages.map((ref, idx) => (
+              <div key={idx} className="relative group">
+                <img
+                  src={ref}
+                  alt={`参考图 ${idx + 1}`}
+                  className="w-16 h-16 object-cover rounded border"
+                />
+                <button
+                  onClick={() => handleRemoveReference(idx)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <label className="flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition text-sm text-gray-500">
+          <Upload size={16} />
+          添加参考图
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleReferenceUpload}
+            className="hidden"
+          />
+        </label>
       </div>
       
       {config.engine && config.engine !== state.config.defaultEngine && (

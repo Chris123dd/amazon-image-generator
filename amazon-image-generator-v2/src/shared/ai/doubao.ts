@@ -43,8 +43,18 @@ export class DoubaoEngine implements IAIEngine {
         n: 1,
       };
       
+      // 收集所有图片：产品图 + 参考图
+      const allImages: string[] = [];
       if (request.productImage) {
-        body.image = request.productImage;
+        allImages.push(request.productImage);
+      }
+      if (request.referenceImages && request.referenceImages.length > 0) {
+        allImages.push(...request.referenceImages);
+      }
+      
+      if (allImages.length > 0) {
+        // 多图生图模式
+        body.image = allImages.length === 1 ? allImages[0] : allImages;
       }
       
       const response = await fetch(DOUBAO_API_URL, {
