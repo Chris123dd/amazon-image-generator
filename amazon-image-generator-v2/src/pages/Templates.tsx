@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { Plus, Download, Upload, Trash2, FileText, Clock, Edit } from 'lucide-react';
+import { Plus, Download, Upload, Trash2, FileText, Clock, Edit, X } from 'lucide-react';
 import { useTemplates } from '@/modules/templates/context/TemplatesContext';
 import { useGenerator } from '@/modules/generator/context/GeneratorContext';
+import { AI_ENGINES, AIEngine } from '@/shared/ai/types';
+import { Template } from '@/modules/templates/types';
 
 export default function Templates() {
   const { templates, saveTemplate, loadTemplate, updateTemplate, deleteTemplate, exportTemplate, importTemplate } = useTemplates();
   const { loadConfig, getConfigForSave } = useGenerator();
   const [newTemplateName, setNewTemplateName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<{ id: string; name: string } | null>(null);
-  const [editName, setEditName] = useState('');
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   
   const handleSave = () => {
     if (!newTemplateName.trim()) return;
@@ -18,16 +19,21 @@ export default function Templates() {
     setShowSaveModal(false);
   };
   
-  const handleEdit = (template: any) => {
-    setEditingTemplate({ id: template.id, name: template.name });
-    setEditName(template.name);
+  const handleEdit = (template: Template) => {
+    setEditingTemplate({ ...template });
   };
   
   const handleUpdate = () => {
-    if (!editName.trim() || !editingTemplate) return;
-    updateTemplate(editingTemplate.id, editName);
+    if (!editingTemplate) return;
+    updateTemplate(editingTemplate.id, editingTemplate.name, {
+      defaultEngine: editingTemplate.defaultEngine,
+      images: editingTemplate.imageConfigs.map((img, idx) => ({
+        id: idx + 1,
+        prompt: img.prompt,
+        engine: img.engine,
+      })),
+    });
     setEditingTemplate(null);
-    setEditName('');
   };
   
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,18 +69,78 @@ export default function Templates() {
       )}
       
       {editingTemplate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">编辑模板</h3>
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              placeholder="输入模板名称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4"
-              autoFocus
-            />
-            <div className="flex justify-end gap-3">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-8">
+          <div className="bg-white rounded-xl p-6 w-full max-w-4xl mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">编辑模板</h3>
+              <button onClick={() => setEditingTemplate(null)} className="p-1 hover:bg-gray-100 rounded">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">模板名称</label>
+              <input
+                type="text"
+                value={editingTemplate.name}
+                onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">默认 AI 引擎</label>
+              <select
+                value={editingTemplate.defaultEngine}
+                onChange={(e) => setEditingTemplate({ ...editingTemplate, defaultEngine: e.target.value as AIEngine })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                {AI_ENGINES.filter(e => e.available).map(engine => (
+                  <option key={engine.id} value={engine.id}>{engine.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {editingTemplate.imageConfigs.map((config, idx) => (
+                <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-gray-800">
+                      {idx === 0 ? '主图' : `附图 ${idx}`}
+                    </span>
+                  </div>
+                  <textarea
+                    value={config.prompt}
+                    onChange={(e) => {
+                      const newConfigs = [...editingTemplate.imageConfigs];
+                      newConfigs[idx] = { ...config, prompt: e.target.value };
+                      setEditingTemplate({ ...editingTemplate, imageConfigs: newConfigs });
+                    }}
+                    placeholder="输入提示词..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                    rows={2}
+                  />
+                  <div className="mt-2">
+                    <select
+                      value={config.engine || ''}
+                      onChange={(e) => {
+                        const newConfigs = [...editingTemplate.imageConfigs];
+                        newConfigs[idx] = { ...config, engine: e.target.value as AIEngine || undefined };
+                        setEditingTemplate({ ...editingTemplate, imageConfigs: newConfigs });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    >
+                      <option value="">使用默认引擎</option>
+                      {AI_ENGINES.filter(e => e.available).map(engine => (
+                        <option key={engine.id} value={engine.id}>{engine.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
               <button onClick={() => setEditingTemplate(null)} className="px-4 py-2 border rounded-lg">取消</button>
               <button onClick={handleUpdate} className="px-4 py-2 bg-orange-500 text-white rounded-lg">保存</button>
             </div>
