@@ -131,11 +131,13 @@ export async function compressToSize(imageData: string): Promise<string> {
   const y = (IMAGE_SIZE - img.height * scale) / 2;
   ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
   
-  let quality = 0.9;
+  // 优先清晰度：先尝试高质量保存
+  let quality = 0.95;
   let result = canvasToDataURL(canvas, quality);
   
-  while (result.length > MAX_FILE_SIZE && quality > 0.1) {
-    quality -= 0.1;
+  // 只有超过大小限制时才逐步降低质量
+  while (result.length > MAX_FILE_SIZE && quality > 0.5) {
+    quality -= 0.05;
     result = canvasToDataURL(canvas, quality);
   }
   

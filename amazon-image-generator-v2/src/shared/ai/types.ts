@@ -50,5 +50,5 @@ export interface IAIEngine {
 export const DEFAULT_IMAGE_COUNT = 7;
 
 export const IMAGE_SIZE = 1600;
-export const IMAGE_QUALITY = 0.8;
+export const IMAGE_QUALITY = 0.95;
 export const MAX_FILE_SIZE = 100 * 1024;
