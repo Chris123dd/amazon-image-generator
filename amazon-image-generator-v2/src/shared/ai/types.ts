@@ -51,4 +51,4 @@ export const DEFAULT_IMAGE_COUNT = 7;
 
 export const IMAGE_SIZE = 1600;
 export const IMAGE_QUALITY = 0.95;
-export const MAX_FILE_SIZE = 100 * 1024;
+export const MAX_FILE_SIZE = 300 * 1024;

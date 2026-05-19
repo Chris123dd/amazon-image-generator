@@ -6,7 +6,7 @@ import { useSettings } from '@/modules/settings/context/SettingsContext';
 import { useHistory } from '@/modules/history/context/HistoryContext';
 import { generateWithEngine } from '@/shared/ai';
 import { postProcessImage } from '@/shared/utils/imageProcessor';
-import { downloadDataURL } from '@/shared/utils/file';
+import { downloadDataURL, downloadAsZip } from '@/shared/utils/file';
 
 interface GeneratorContextType {
   state: GenerationState;
@@ -195,14 +195,9 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.config.images]);
   
-  const downloadAll = useCallback(() => {
-    state.config.images.forEach((img, idx) => {
-      if (img.generatedImage) {
-        setTimeout(() => {
-          downloadDataURL(img.generatedImage!, `amazon-product-${idx + 1}.jpg`);
-        }, idx * 300);
-      }
-    });
+  const downloadAll = useCallback(async () => {
+    const urls = state.config.images.filter(img => img.generatedImage).map(img => img.generatedImage!);
+    await downloadAsZip(urls, 'amazon-product-images');
   }, [state.config.images]);
   
   const loadConfig = useCallback((config: Partial<GenerationConfig>) => {

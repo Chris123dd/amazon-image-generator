@@ -1,7 +1,7 @@
 import { Trash2, Clock, Image as ImageIcon, Download } from 'lucide-react';
 import { useHistory } from '@/modules/history/context/HistoryContext';
 import { useGenerator } from '@/modules/generator/context/GeneratorContext';
-import { downloadDataURL } from '@/shared/utils/file';
+import { downloadAsZip } from '@/shared/utils/file';
 
 export default function History() {
   const { history, deleteHistoryItem, clearAllHistory, loadHistoryConfig } = useHistory();
@@ -11,12 +11,9 @@ export default function History() {
     return new Date(timestamp).toLocaleDateString('zh-CN');
   };
   
-  const handleDownloadAll = (item: any) => {
-    item.images.forEach((img: any, idx: number) => {
-      setTimeout(() => {
-        downloadDataURL(img.generatedImage, `${item.name || 'history'}-${idx + 1}.jpg`);
-      }, idx * 300);
-    });
+  const handleDownloadAll = async (item: any) => {
+    const urls = item.images.filter((img: any) => img.generatedImage).map((img: any) => img.generatedImage);
+    await downloadAsZip(urls, item.name || 'amazon-images');
   };
   
   return (
