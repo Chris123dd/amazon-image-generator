@@ -91,6 +91,9 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'START_GENERATION' });
     abortControllerRef.current = new AbortController();
     
+    let hasGeneratedImages = false;
+    const generatedImages: { id: number; prompt: string; engine: AIEngine; generatedImage: string }[] = [];
+    
     try {
       for (let i = 0; i < state.config.images.length; i++) {
         if (abortControllerRef.current.signal.aborted || state.isPaused) {
@@ -110,6 +113,13 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
             state.config.productImage
           );
           dispatch({ type: 'SET_GENERATED_IMAGE', payload: { id: i + 1, image: generatedImage } });
+          hasGeneratedImages = true;
+          generatedImages.push({
+            id: i + 1,
+            prompt: imageConfig.prompt,
+            engine,
+            generatedImage,
+          });
         } catch (error) {
           dispatch({
             type: 'SET_IMAGE_STATUS',
@@ -123,9 +133,13 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
       }
       
       // 保存到历史记录（至少有一张生成成功的图）
-      const hasGeneratedImages = state.config.images.some(img => img.generatedImage);
       if (hasGeneratedImages) {
-        saveToHistory(`生成结果 ${new Date().toLocaleString()}`, state.config);
+        const historyData = {
+          productImage: state.config.productImage,
+          defaultEngine: state.config.defaultEngine,
+          images: generatedImages,
+        };
+        saveToHistory(`生成结果 ${new Date().toLocaleString()}`, historyData);
       }
     } finally {
       dispatch({ type: 'PAUSE_GENERATION' });

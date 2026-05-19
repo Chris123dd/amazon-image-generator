@@ -6,6 +6,7 @@ interface TemplatesContextType {
   templates: Template[];
   saveTemplate: (name: string, config: any) => void;
   loadTemplate: (templateId: string) => any;
+  updateTemplate: (templateId: string, name: string, config?: any) => void;
   deleteTemplate: (templateId: string) => void;
   exportTemplate: (templateId: string) => void;
   importTemplate: (file: File) => Promise<void>;
@@ -47,6 +48,23 @@ export function TemplatesProvider({ children }: { children: React.ReactNode }) {
     };
   }, [templates]);
   
+  const updateTemplate = useCallback((templateId: string, name: string, config?: any) => {
+    setTemplates(templates.map(t => {
+      if (t.id !== templateId) return t;
+      return {
+        ...t,
+        name,
+        defaultEngine: config?.defaultEngine || t.defaultEngine,
+        imageConfigs: config?.images 
+          ? config.images.map((img: any) => ({
+              prompt: img.prompt,
+              engine: img.engine,
+            }))
+          : t.imageConfigs,
+      };
+    }));
+  }, [templates, setTemplates]);
+  
   const deleteTemplate = useCallback((templateId: string) => {
     setTemplates(templates.filter(t => t.id !== templateId));
   }, [templates, setTemplates]);
@@ -73,7 +91,7 @@ export function TemplatesProvider({ children }: { children: React.ReactNode }) {
   }, [templates, setTemplates]);
   
   return (
-    <TemplatesContext.Provider value={{ templates, saveTemplate, loadTemplate, deleteTemplate, exportTemplate, importTemplate }}>
+    <TemplatesContext.Provider value={{ templates, saveTemplate, loadTemplate, updateTemplate, deleteTemplate, exportTemplate, importTemplate }}>
       {children}
     </TemplatesContext.Provider>
   );
