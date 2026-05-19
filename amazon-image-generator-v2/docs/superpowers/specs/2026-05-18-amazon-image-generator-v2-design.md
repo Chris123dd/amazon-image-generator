@@ -676,6 +676,30 @@ interface IAIEngine {
 - **可重试**：失败的图可以重试
 - **降级方案**：AI 失败时，给用户明确提示
 
+### 8.3 存储溢出处理
+
+- 保存历史记录时使用 `try-catch` 包裹
+- 如果 `localStorage.setItem` 抛出异常（配额不足）：
+  - 提示用户："存储空间不足，请清理历史记录"
+  - 建议用户删除不需要的历史记录
+- 可选增强：自动检查存储使用量，超过 80% 时显示警告
+
+### 8.4 请求超时机制
+
+- 每个 AI API 调用设置 120 秒超时
+- 超时使用 `Promise.race` 实现：
+  ```typescript
+  const withTimeout = (promise: Promise, ms: number) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('请求超时')), ms)
+      )
+    ]);
+  ```
+- 超时后显示明确提示："AI 服务响应超时，请重试或切换其他引擎"
+- 超时不视为永久失败，用户可重试
+
 ---
 
 ## 9. 开发计划
