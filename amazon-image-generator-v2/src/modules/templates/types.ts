@@ -8,5 +8,6 @@ export interface Template {
   imageConfigs: Array<{
     prompt: string;
     engine?: AIEngine;
+    referenceImages?: string[];
   }>;
 }

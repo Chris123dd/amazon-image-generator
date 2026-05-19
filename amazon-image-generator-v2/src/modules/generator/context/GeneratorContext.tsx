@@ -211,6 +211,7 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
         id: img.id,
         prompt: img.prompt,
         engine: img.engine,
+        referenceImages: img.referenceImages,
       })),
     };
   }, [state.config]);

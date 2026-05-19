@@ -31,6 +31,7 @@ export default function Templates() {
         id: idx + 1,
         prompt: img.prompt,
         engine: img.engine,
+        referenceImages: img.referenceImages || [],
       })),
     });
     setEditingTemplate(null);
@@ -40,6 +41,36 @@ export default function Templates() {
     const file = e.target.files?.[0];
     if (!file) return;
     await importTemplate(file);
+  };
+  
+  const handleReferenceUpload = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !editingTemplate) return;
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        const newConfigs = [...editingTemplate.imageConfigs];
+        newConfigs[idx] = { 
+          ...newConfigs[idx], 
+          referenceImages: [...(newConfigs[idx].referenceImages || []), dataUrl]
+        };
+        setEditingTemplate({ ...editingTemplate, imageConfigs: newConfigs });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  
+  const handleRemoveReference = (configIdx: number, refIdx: number) => {
+    if (!editingTemplate) return;
+    const newConfigs = [...editingTemplate.imageConfigs];
+    const refs = newConfigs[configIdx].referenceImages || [];
+    newConfigs[configIdx] = {
+      ...newConfigs[configIdx],
+      referenceImages: refs.filter((_, i) => i !== refIdx)
+    };
+    setEditingTemplate({ ...editingTemplate, imageConfigs: newConfigs });
   };
   
   const formatDate = (timestamp: number) => {
@@ -135,6 +166,45 @@ export default function Templates() {
                         <option key={engine.id} value={engine.id}>{engine.name}</option>
                       ))}
                     </select>
+                  </div>
+                  
+                  {/* 参考图编辑区域 */}
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      参考图 {config.referenceImages && config.referenceImages.length > 0 && `(${config.referenceImages.length}张)`}
+                    </label>
+                    
+                    {config.referenceImages && config.referenceImages.length > 0 && (
+                      <div className="flex gap-2 mb-2 flex-wrap">
+                        {config.referenceImages.map((ref, refIdx) => (
+                          <div key={refIdx} className="relative group">
+                            <img
+                              src={ref}
+                              alt={`参考图 ${refIdx + 1}`}
+                              className="w-16 h-16 object-cover rounded border"
+                            />
+                            <button
+                              onClick={() => handleRemoveReference(idx, refIdx)}
+                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <label className="flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50/30 transition text-sm text-gray-500">
+                      <Upload size={16} />
+                      添加参考图
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleReferenceUpload(idx, e)}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
                 </div>
               ))}

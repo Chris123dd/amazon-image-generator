@@ -27,6 +27,7 @@ export function TemplatesProvider({ children }: { children: React.ReactNode }) {
       imageConfigs: config.images.map((img: any) => ({
         prompt: img.prompt,
         engine: img.engine,
+        referenceImages: img.referenceImages || [],
       })),
     };
     setTemplates([...templates, newTemplate]);
@@ -42,7 +43,7 @@ export function TemplatesProvider({ children }: { children: React.ReactNode }) {
         id: idx + 1,
         prompt: img.prompt,
         engine: img.engine,
-        referenceImages: [],
+        referenceImages: img.referenceImages || [],
         status: 'pending' as const,
       })),
     };
@@ -59,6 +60,7 @@ export function TemplatesProvider({ children }: { children: React.ReactNode }) {
           ? config.images.map((img: any) => ({
               prompt: img.prompt,
               engine: img.engine,
+              referenceImages: img.referenceImages || [],
             }))
           : t.imageConfigs,
       };
