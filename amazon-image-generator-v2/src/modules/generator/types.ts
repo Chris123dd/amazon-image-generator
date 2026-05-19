@@ -1,4 +1,4 @@
-import { AIEngine, DEFAULT_IMAGE_COUNT } from '@/shared/ai/types';
+import { AIEngine } from '@/shared/ai/types';
 
 export type ImageStatus = 'pending' | 'generating' | 'completed' | 'failed';
 
@@ -10,6 +10,7 @@ export interface ImageConfig {
   generatedImage?: string;
   status: ImageStatus;
   error?: string;
+  selected: boolean;
 }
 
 export interface GenerationConfig {
@@ -37,4 +38,7 @@ export type GenerationAction =
   | { type: 'SET_IMAGE_STATUS'; payload: { id: number; status: ImageStatus; error?: string } }
   | { type: 'SET_GENERATED_IMAGE'; payload: { id: number; image: string } }
   | { type: 'RESET' }
-  | { type: 'LOAD_CONFIG'; payload: Partial<GenerationConfig> };
+  | { type: 'LOAD_CONFIG'; payload: Partial<GenerationConfig> }
+  | { type: 'TOGGLE_IMAGE_SELECTED'; payload: number }
+  | { type: 'SET_ALL_IMAGES_SELECTED'; payload: boolean }
+  | { type: 'SET_IMAGE_COUNT'; payload: number };

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useCallback, useRef } from 'react';
 import { GenerationState, GenerationAction, GenerationConfig, ImageConfig } from '../types';
 import { generationReducer } from '../reducer';
-import { AIEngine, DEFAULT_IMAGE_COUNT } from '@/shared/ai/types';
+import { AIEngine, DEFAULT_IMAGE_COUNT, MAX_IMAGE_COUNT } from '@/shared/ai/types';
 import { useSettings } from '@/modules/settings/context/SettingsContext';
 import { useHistory } from '@/modules/history/context/HistoryContext';
 import { generateWithEngine } from '@/shared/ai';
@@ -14,6 +14,10 @@ interface GeneratorContextType {
   setProductImage: (image: string | null) => void;
   setDefaultEngine: (engine: AIEngine) => void;
   updateImageConfig: (id: number, updates: Partial<ImageConfig>) => void;
+  toggleImageSelected: (id: number) => void;
+  selectAllImages: () => void;
+  deselectAllImages: () => void;
+  setImageCount: (count: number) => void;
   startGeneration: () => Promise<void>;
   pauseGeneration: () => void;
   resumeGeneration: () => void;
@@ -38,6 +42,7 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
         prompt: '',
         referenceImages: [],
         status: 'pending' as const,
+        selected: true,
       })),
     },
     isGenerating: false,
@@ -59,6 +64,24 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
   
   const updateImageConfig = useCallback((id: number, updates: Partial<ImageConfig>) => {
     dispatch({ type: 'UPDATE_IMAGE_CONFIG', payload: { id, updates } });
+  }, []);
+  
+  const toggleImageSelected = useCallback((id: number) => {
+    dispatch({ type: 'TOGGLE_IMAGE_SELECTED', payload: id });
+  }, []);
+  
+  const selectAllImages = useCallback(() => {
+    dispatch({ type: 'SET_ALL_IMAGES_SELECTED', payload: true });
+  }, []);
+  
+  const deselectAllImages = useCallback(() => {
+    dispatch({ type: 'SET_ALL_IMAGES_SELECTED', payload: false });
+  }, []);
+  
+  const setImageCount = useCallback((count: number) => {
+    if (count >= 1 && count <= MAX_IMAGE_COUNT) {
+      dispatch({ type: 'SET_IMAGE_COUNT', payload: count });
+    }
   }, []);
   
   const generateSingleImage = useCallback(async (
@@ -88,6 +111,12 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
+    const selectedImages = state.config.images.filter(img => img.selected);
+    if (selectedImages.length === 0) {
+      alert('请至少选择一张图片进行生成');
+      return;
+    }
+    
     dispatch({ type: 'START_GENERATION' });
     abortControllerRef.current = new AbortController();
     
@@ -95,15 +124,16 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
     const generatedImages: { id: number; prompt: string; engine: AIEngine; generatedImage: string }[] = [];
     
     try {
-      for (let i = 0; i < state.config.images.length; i++) {
+      for (let i = 0; i < selectedImages.length; i++) {
         if (abortControllerRef.current.signal.aborted || state.isPaused) {
           break;
         }
         
-        dispatch({ type: 'SET_CURRENT_IMAGE', payload: i });
-        dispatch({ type: 'SET_IMAGE_STATUS', payload: { id: i + 1, status: 'generating' } });
+        const selectedIndex = state.config.images.findIndex(img => img.id === selectedImages[i].id);
+        dispatch({ type: 'SET_CURRENT_IMAGE', payload: selectedIndex });
+        dispatch({ type: 'SET_IMAGE_STATUS', payload: { id: selectedImages[i].id, status: 'generating' } });
         
-        const imageConfig = state.config.images[i];
+        const imageConfig = selectedImages[i];
         const engine = imageConfig.engine || state.config.defaultEngine;
         
         try {
@@ -112,10 +142,10 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
             engine,
             state.config.productImage
           );
-          dispatch({ type: 'SET_GENERATED_IMAGE', payload: { id: i + 1, image: generatedImage } });
+          dispatch({ type: 'SET_GENERATED_IMAGE', payload: { id: selectedImages[i].id, image: generatedImage } });
           hasGeneratedImages = true;
           generatedImages.push({
-            id: i + 1,
+            id: selectedImages[i].id,
             prompt: imageConfig.prompt,
             engine,
             generatedImage,
@@ -124,7 +154,7 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
           dispatch({
             type: 'SET_IMAGE_STATUS',
             payload: {
-              id: i + 1,
+              id: selectedImages[i].id,
               status: 'failed',
               error: error instanceof Error ? error.message : '生成失败',
             },
@@ -212,6 +242,8 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
         prompt: img.prompt,
         engine: img.engine,
         referenceImages: img.referenceImages,
+        status: img.status,
+        selected: img.selected,
       })),
     };
   }, [state.config]);
@@ -224,6 +256,10 @@ export function GeneratorProvider({ children }: { children: React.ReactNode }) {
         setProductImage,
         setDefaultEngine,
         updateImageConfig,
+        toggleImageSelected,
+        selectAllImages,
+        deselectAllImages,
+        setImageCount,
         startGeneration,
         pauseGeneration,
         resumeGeneration,

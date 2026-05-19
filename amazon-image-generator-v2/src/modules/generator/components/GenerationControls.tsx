@@ -1,12 +1,24 @@
-import { Play, Pause, RotateCcw, Download } from 'lucide-react';
+import { Play, Pause, RotateCcw, Download, CheckSquare, Square } from 'lucide-react';
 import { useGenerator } from '../context/GeneratorContext';
-import { AI_ENGINES } from '@/shared/ai/types';
+import { AI_ENGINES, MAX_IMAGE_COUNT } from '@/shared/ai/types';
 
 export function GenerationControls() {
-  const { state, setDefaultEngine, startGeneration, pauseGeneration, reset, downloadAll } = useGenerator();
+  const { 
+    state, 
+    setDefaultEngine, 
+    startGeneration, 
+    pauseGeneration, 
+    reset, 
+    downloadAll,
+    selectAllImages,
+    deselectAllImages,
+    setImageCount 
+  } = useGenerator();
   
   const completedCount = state.config.images.filter(img => img.status === 'completed').length;
   const progress = (completedCount / state.config.images.length) * 100;
+  
+  const selectedCount = state.config.images.filter(img => img.selected).length;
   
   return (
     <div className="space-y-4">
@@ -24,6 +36,42 @@ export function GenerationControls() {
             </option>
           ))}
         </select>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-gray-700">生成数量</span>
+        <select
+          value={state.config.images.length}
+          onChange={(e) => setImageCount(Number(e.target.value))}
+          disabled={state.isGenerating}
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
+        >
+          {Array.from({ length: MAX_IMAGE_COUNT }, (_, i) => i + 1).map(num => (
+            <option key={num} value={num}>{num} 张</option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <button
+          onClick={selectAllImages}
+          disabled={state.isGenerating}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition"
+        >
+          <CheckSquare size={14} />
+          全选
+        </button>
+        <button
+          onClick={deselectAllImages}
+          disabled={state.isGenerating}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition"
+        >
+          <Square size={14} />
+          取消全选
+        </button>
+        <span className="text-sm text-gray-500">
+          已选择 {selectedCount} / {state.config.images.length} 张
+        </span>
       </div>
       
       {state.isGenerating && (

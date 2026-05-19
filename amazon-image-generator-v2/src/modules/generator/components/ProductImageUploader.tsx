@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Upload, Image as ImageIcon } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useGenerator } from '../context/GeneratorContext';
 import { makeSquareWithPadding } from '@/shared/utils/imageProcessor';
 

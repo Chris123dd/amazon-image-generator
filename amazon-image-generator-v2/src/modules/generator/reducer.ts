@@ -1,12 +1,13 @@
 import { GenerationState, GenerationAction, ImageConfig } from './types';
 import { DEFAULT_IMAGE_COUNT } from '@/shared/ai/types';
 
-const createInitialImages = (): ImageConfig[] =>
-  Array.from({ length: DEFAULT_IMAGE_COUNT }, (_, i) => ({
+const createInitialImages = (count: number = DEFAULT_IMAGE_COUNT): ImageConfig[] =>
+  Array.from({ length: count }, (_, i) => ({
     id: i + 1,
     prompt: '',
     referenceImages: [],
     status: 'pending' as const,
+    selected: true,
   }));
 
 const initialState: GenerationState = {
@@ -116,6 +117,56 @@ export function generationReducer(state: GenerationState, action: GenerationActi
           images: action.payload.images || state.config.images,
         },
       };
+      
+    case 'TOGGLE_IMAGE_SELECTED':
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          images: state.config.images.map(img =>
+            img.id === action.payload ? { ...img, selected: !img.selected } : img
+          ),
+        },
+      };
+      
+    case 'SET_ALL_IMAGES_SELECTED':
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          images: state.config.images.map(img => ({ ...img, selected: action.payload })),
+        },
+      };
+      
+    case 'SET_IMAGE_COUNT':
+      const newCount = action.payload;
+      const currentCount = state.config.images.length;
+      if (newCount === currentCount) return state;
+      
+      if (newCount > currentCount) {
+        const newImages = Array.from({ length: newCount - currentCount }, (_, i) => ({
+          id: currentCount + i + 1,
+          prompt: '',
+          referenceImages: [],
+          status: 'pending' as const,
+          selected: true,
+        }));
+        return {
+          ...state,
+          config: {
+            ...state.config,
+            images: [...state.config.images, ...newImages],
+          },
+        };
+      } else {
+        return {
+          ...state,
+          config: {
+            ...state.config,
+            images: state.config.images.slice(0, newCount),
+          },
+        };
+      }
       
     default:
       return state;

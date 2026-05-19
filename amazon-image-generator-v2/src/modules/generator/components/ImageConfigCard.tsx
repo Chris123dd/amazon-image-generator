@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { RefreshCw, Download, Image as ImageIcon, AlertCircle, Upload, X } from 'lucide-react';
+import { RefreshCw, Download, Image as ImageIcon, AlertCircle, Upload, X, Check } from 'lucide-react';
 import { useGenerator } from '../context/GeneratorContext';
 import { ImageConfig as ImageConfigType } from '../types';
 import { AI_ENGINES, AIEngine } from '@/shared/ai/types';
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function ImageConfigCard({ config, index }: Props) {
-  const { state, updateImageConfig, regenerateImage, downloadImage } = useGenerator();
+  const { state, updateImageConfig, regenerateImage, downloadImage, toggleImageSelected } = useGenerator();
   
   const handlePromptChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateImageConfig(config.id, { prompt: e.target.value });
@@ -68,9 +68,21 @@ export function ImageConfigCard({ config, index }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-gray-800">
-          {isMainImage ? '主图' : `附图 ${index}`}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => toggleImageSelected(config.id)}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+              config.selected
+                ? 'bg-orange-500 border-orange-500 text-white'
+                : 'border-gray-300 hover:border-orange-400'
+            }`}
+          >
+            {config.selected && <Check size={12} />}
+          </button>
+          <span className="font-medium text-gray-800">
+            {isMainImage ? '主图' : `附图 ${index}`}
+          </span>
+        </div>
         <span className={`text-xs px-2 py-1 rounded-full ${statusColors[config.status]}`}>
           {statusLabels[config.status]}
         </span>
